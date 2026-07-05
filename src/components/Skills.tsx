@@ -28,7 +28,8 @@ export default function Skills() {
   const [isEditing, setIsEditing] = useState<string | null>(null); // ID of category being edited
   const [isAdding, setIsAdding] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ title: '', icon: 'Terminal', skills: '' });
+  const [form, setForm] = useState({ title: '', icon: 'Terminal', skills: [] as string[] });
+  const [newSkillInput, setNewSkillInput] = useState('');
 
   useEffect(() => {
     fetch('/api/skills')
@@ -52,6 +53,23 @@ export default function Skills() {
       });
   }, []);
 
+  const handleAddSkillToForm = () => {
+    if (newSkillInput.trim()) {
+      setForm(prev => ({
+        ...prev,
+        skills: [...prev.skills, newSkillInput.trim()]
+      }));
+      setNewSkillInput('');
+    }
+  };
+
+  const handleRemoveSkillFromForm = (index: number) => {
+    setForm(prev => ({
+      ...prev,
+      skills: prev.skills.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleAdd = async () => {
     try {
       const res = await fetch('/api/skills', {
@@ -60,7 +78,7 @@ export default function Skills() {
         body: JSON.stringify({
           title: form.title,
           icon: form.icon,
-          skills: form.skills.split(',').map(s => s.trim()),
+          skills: form.skills,
           order: categories.length + 1
         })
       });
@@ -68,7 +86,7 @@ export default function Skills() {
         const newSkill = await res.json();
         setCategories([...categories, newSkill]);
         setIsAdding(false);
-        setForm({ title: '', icon: 'Terminal', skills: '' });
+        setForm({ title: '', icon: 'Terminal', skills: [] });
       }
     } catch (err) {
       console.error(err);
@@ -87,7 +105,7 @@ export default function Skills() {
         body: JSON.stringify({
           title: form.title,
           icon: form.icon,
-          skills: form.skills.split(',').map(s => s.trim())
+          skills: form.skills
         })
       });
       if (res.ok) {
@@ -108,7 +126,6 @@ export default function Skills() {
       console.error("No ID provided for deletion");
       return;
     }
-    // Remove confirm() as it may be blocked in some iframe environments
     try {
       const res = await fetch(`/api/skills/${id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -128,7 +145,7 @@ export default function Skills() {
     setForm({
       title: cat.title,
       icon: cat.icon,
-      skills: Array.isArray(cat.skills) ? cat.skills.join(', ') : ''
+      skills: Array.isArray(cat.skills) ? [...cat.skills] : []
     });
   };
 
@@ -141,7 +158,10 @@ export default function Skills() {
           
           {user && !isAdding && (
             <button 
-              onClick={() => setIsAdding(true)}
+              onClick={() => {
+                setForm({ title: '', icon: 'Terminal', skills: [] });
+                setIsAdding(true);
+              }}
               className="mt-8 px-6 py-2 bg-brand-900 text-brand-50 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2 mx-auto hover:bg-brand-800 transition-all"
             >
               <Plus className="w-4 h-4" /> Add Category
@@ -159,7 +179,7 @@ export default function Skills() {
                 className="p-8 bg-white border-2 border-dashed border-brand-900/20 rounded-2xl flex flex-col gap-4"
               >
                 <input 
-                  placeholder="Category Title"
+                  placeholder="Category Title (e.g. Programming)"
                   value={form.title}
                   onChange={e => setForm({...form, title: e.target.value})}
                   className="bg-brand-50 border border-brand-900/10 rounded-xl px-4 py-2 text-sm focus:outline-none"
@@ -171,14 +191,35 @@ export default function Skills() {
                 >
                   {Object.keys(iconMap).map(icon => <option key={icon} value={icon}>{icon}</option>)}
                 </select>
-                <textarea 
-                  placeholder="Skills (comma separated)"
-                  value={form.skills}
-                  onChange={e => setForm({...form, skills: e.target.value})}
-                  className="bg-brand-50 border border-brand-900/10 rounded-xl px-4 py-2 text-sm focus:outline-none resize-none h-24"
-                />
-                <div className="flex gap-2">
-                  <button onClick={handleAdd} className="flex-1 bg-brand-900 text-brand-50 py-2 rounded-xl text-xs font-bold">Add</button>
+                
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input 
+                      placeholder="Add a skill (e.g. React.js)"
+                      value={newSkillInput}
+                      onChange={e => setNewSkillInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleAddSkillToForm()}
+                      className="flex-1 bg-brand-50 border border-brand-900/10 rounded-xl px-4 py-2 text-sm focus:outline-none"
+                    />
+                    <button 
+                      onClick={handleAddSkillToForm}
+                      className="bg-brand-900 text-brand-50 p-2 rounded-xl"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {form.skills.map((s, i) => (
+                      <span key={i} className="flex items-center gap-1 bg-brand-900/5 text-brand-900 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                        {s}
+                        <button onClick={() => handleRemoveSkillFromForm(i)}><X className="w-3 h-3" /></button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mt-4">
+                  <button onClick={handleAdd} className="flex-1 bg-brand-900 text-brand-50 py-2 rounded-xl text-xs font-bold">Save Category</button>
                   <button onClick={() => setIsAdding(false)} className="flex-1 bg-brand-900/5 text-brand-900 py-2 rounded-xl text-xs font-bold">Cancel</button>
                 </div>
               </motion.div>
@@ -220,31 +261,56 @@ export default function Skills() {
                       >
                         {Object.keys(iconMap).map(icon => <option key={icon} value={icon}>{icon}</option>)}
                       </select>
-                      <textarea 
-                        value={form.skills}
-                        onChange={e => setForm({...form, skills: e.target.value})}
-                        className="bg-white border border-brand-900/10 rounded-xl px-4 py-2 text-sm focus:outline-none resize-none h-24"
-                      />
-                      <div className="flex gap-2">
-                        <button onClick={() => handleUpdate(categoryId)} className="flex-1 bg-brand-900 text-brand-50 py-2 rounded-xl text-xs font-bold">Save</button>
+                      
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <input 
+                            placeholder="Add a skill"
+                            value={newSkillInput}
+                            onChange={e => setNewSkillInput(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleAddSkillToForm()}
+                            className="flex-1 bg-white border border-brand-900/10 rounded-xl px-4 py-2 text-sm focus:outline-none"
+                          />
+                          <button 
+                            onClick={handleAddSkillToForm}
+                            className="bg-brand-900 text-brand-50 p-2 rounded-xl"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {form.skills.map((s, i) => (
+                            <span key={i} className="flex items-center gap-1 bg-brand-900/5 text-brand-900 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                              {s}
+                              <button onClick={() => handleRemoveSkillFromForm(i)}><X className="w-3 h-3" /></button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 mt-4">
+                        <button onClick={() => handleUpdate(categoryId)} className="flex-1 bg-brand-900 text-brand-50 py-2 rounded-xl text-xs font-bold">Update</button>
                         <button onClick={() => setIsEditing(null)} className="flex-1 bg-brand-900/5 text-brand-900 py-2 rounded-xl text-xs font-bold">Cancel</button>
                       </div>
                     </div>
                   ) : (
                   <>
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand-900/5 flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-brand-900 group-hover:text-brand-50 transition-colors">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand-900/5 flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-brand-900 group-hover:text-brand-50 transition-all duration-500 transform group-hover:rotate-6">
                       {React.createElement(iconMap[category.icon] || Terminal, { className: "w-5 h-5 sm:w-6 sm:h-6" })}
                     </div>
                     <h3 className="text-base sm:text-xl font-display font-semibold text-brand-900 mb-4">{category.title}</h3>
                     <ul className="space-y-2 sm:space-y-3">
-                      {category.skills.map((skill: string) => (
-                        <li 
-                          key={skill} 
-                          className="flex items-start gap-2 sm:gap-3 text-brand-900/70 text-xs sm:text-sm font-medium"
+                      {category.skills.map((skill: string, sIdx: number) => (
+                        <motion.li 
+                          key={sIdx} 
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.1 + sIdx * 0.05 }}
+                          className="flex items-center gap-2 sm:gap-3 text-brand-900/70 text-xs sm:text-sm font-medium group/item"
                         >
-                          <div className="w-1.5 h-1.5 rounded-full bg-brand-400 mt-2 shrink-0" />
-                          <span>{skill}</span>
-                        </li>
+                          <div className="w-2 h-2 rounded-full bg-brand-400 group-hover/item:bg-brand-900 group-hover/item:scale-125 transition-all duration-300 shrink-0" />
+                          <span className="group-hover/item:text-brand-900 transition-colors">{skill}</span>
+                        </motion.li>
                       ))}
                     </ul>
                   </>

@@ -18,12 +18,21 @@ export default function ContactForm() {
   const [visitCount, setVisitCount] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch('/api/visits')
+    // Increment visit count on load
+    fetch('/api/visits/increment', { method: 'POST' })
       .then(res => res.json())
       .then(data => {
         if (data.count !== undefined) setVisitCount(data.count);
       })
-      .catch(err => console.error("Error tracking visit:", err));
+      .catch(err => {
+        console.error("Error incrementing visit:", err);
+        // Fallback to just fetching if increment fails
+        fetch('/api/visits')
+          .then(res => res.json())
+          .then(data => {
+            if (data.count !== undefined) setVisitCount(data.count);
+          });
+      });
   }, []);
 
   useEffect(() => {
@@ -157,27 +166,27 @@ export default function ContactForm() {
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-12 flex flex-col items-center gap-3 w-full"
+                className="mt-16 flex flex-col items-center gap-4 w-full"
               >
-                <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10 shadow-sm backdrop-blur-md whitespace-nowrap">
-                  <div className="flex -space-x-2 shrink-0">
+                <div className="flex items-center gap-4 px-6 py-3 bg-white/[0.03] rounded-full border border-white/10 shadow-xl backdrop-blur-xl group hover:border-brand-400/30 transition-colors">
+                  <div className="flex -space-x-2.5">
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="w-4 h-4 rounded-full bg-brand-400/20 border border-brand-900 flex items-center justify-center">
-                        <div className="w-1 h-1 rounded-full bg-brand-400" />
+                      <div key={i} className="w-5 h-5 rounded-full bg-brand-400/20 border-2 border-brand-900 flex items-center justify-center overflow-hidden">
+                        <div className="w-1.5 h-1.5 rounded-full bg-brand-400/40" />
                       </div>
                     ))}
                   </div>
-                  <div className="w-px h-4 bg-white/10 shrink-0" />
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <Eye className="w-3.5 h-3.5 text-brand-400 shrink-0" />
-                    <span className="text-[10px] font-bold text-white uppercase tracking-wider truncate">
-                      {visitCount.toLocaleString()} Total Visits
+                  <div className="w-px h-4 bg-white/10" />
+                  <div className="flex items-center gap-2.5">
+                    <Eye className="w-4 h-4 text-brand-400" />
+                    <span className="text-[11px] font-bold text-white/90 uppercase tracking-[0.2em]">
+                      {visitCount.toLocaleString()} <span className="text-white/40 font-light">Global Visits</span>
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 opacity-40">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                  <span className="text-[8px] text-white/30 uppercase tracking-[0.2em]">System Live</span>
+                  <span className="text-[8px] text-white uppercase tracking-[0.3em] font-medium">Network Active</span>
                 </div>
               </motion.div>
             )}
