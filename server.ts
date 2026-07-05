@@ -2,12 +2,8 @@ import "dotenv/config";
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { fileURLToPath } from "url";
 import connectDB from "./src/lib/mongodb.ts";
 import { About, Skill, Project, Feedback, Visit } from "./src/models/index.ts";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function startServer() {
   // Connect to MongoDB
