@@ -9,10 +9,12 @@ export default function Hero() {
   const [loading, setLoading] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const DEFAULT_IMAGE = '/src/assets/images/thirumurugan_anime_portrait_v2_1782457017979.jpg';
   const [heroContent, setHeroContent] = useState({
     title: 'THIRUMURUGAN S.',
     role: 'Design Engineer',
     description: 'I am an engineering student with a passion for creative design and technical precision. I specialize in building functional, aesthetic, and user-centric solutions that bridge the gap between imagination and reality.',
+    heroImage: '',
     socialLinks: [
       { platform: 'Github', url: '#', icon: 'Github' },
       { platform: 'LinkedIn', url: 'https://www.linkedin.com/in/thirumurugan-s-9691ba310', icon: 'Linkedin' },
@@ -31,16 +33,15 @@ export default function Hero() {
     fetch('/api/about')
       .then(res => res.json())
       .then(data => {
-        if (data.heroImage) {
-          setProfileImage(data.heroImage);
-        } else {
-          setProfileImage('/src/assets/images/thirumurugans_anime_portrait_v2_1782457017979.jpg');
-        }
-        if (data.heroTitle || data.heroRole || data.heroDescription || (data.socialLinks && data.socialLinks.length > 0)) {
+        const image = data.heroImage || DEFAULT_IMAGE;
+        setProfileImage(image);
+        
+        if (data.heroTitle || data.heroRole || data.heroDescription || data.heroImage || (data.socialLinks && data.socialLinks.length > 0)) {
           const fetchedContent = {
             title: data.heroTitle || 'THIRUMURUGAN S.',
             role: data.heroRole || 'Design Engineer',
             description: data.heroDescription || 'I am an engineering student with a passion for creative design and technical precision. I specialize in building functional, aesthetic, and user-centric solutions that bridge the gap between imagination and reality.',
+            heroImage: data.heroImage || '',
             socialLinks: (data.socialLinks && data.socialLinks.length > 0) ? data.socialLinks : [
               { platform: 'Github', url: '#', icon: 'Github' },
               { platform: 'LinkedIn', url: 'https://www.linkedin.com/in/thirumurugan-s-9691ba310', icon: 'Linkedin' },
@@ -55,9 +56,21 @@ export default function Hero() {
       })
       .catch(err => {
         console.error("Error fetching about data:", err);
+        setProfileImage(DEFAULT_IMAGE);
         setLoading(false);
       });
   }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditForm(prev => ({ ...prev, heroImage: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const getIcon = (platform: string) => {
     const p = platform.toLowerCase();
@@ -73,8 +86,26 @@ export default function Hero() {
   };
 
   const handleSave = async () => {
-    setHeroContent(editForm);
-    setIsEditing(false);
+    try {
+      const res = await fetch('/api/about', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          heroTitle: editForm.title,
+          heroRole: editForm.role,
+          heroDescription: editForm.description,
+          heroImage: editForm.heroImage,
+          socialLinks: editForm.socialLinks
+        })
+      });
+      if (res.ok) {
+        setHeroContent(editForm);
+        setProfileImage(editForm.heroImage || DEFAULT_IMAGE);
+        setIsEditing(false);
+      }
+    } catch (err) {
+      console.error("Error saving hero content:", err);
+    }
   };
 
   return (
@@ -154,6 +185,39 @@ export default function Hero() {
                       onChange={e => setEditForm({...editForm, description: e.target.value})}
                       className="w-full bg-white border border-brand-900/10 rounded-xl px-4 py-3 text-brand-900 focus:outline-none focus:ring-2 focus:ring-brand-900/5 resize-none"
                     />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-brand-900/40">Profile Image</label>
+                    <div className="flex flex-col gap-4">
+                      {editForm.heroImage ? (
+                        <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-brand-900/10">
+                          <img src={editForm.heroImage} className="w-full h-full object-cover" alt="Preview" />
+                          <button 
+                            onClick={() => setEditForm({...editForm, heroImage: ''})}
+                            className="absolute top-1 right-1 p-1 bg-brand-900 text-white rounded-full"
+                          >
+                            <X className="w-2 h-2" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center w-24 h-24 bg-white border-2 border-dashed border-brand-900/10 rounded-xl cursor-pointer hover:bg-brand-900/5 transition-colors">
+                          <Plus className="w-6 h-6 text-brand-900/20" />
+                          <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                        </label>
+                      )}
+                      
+                      <div className="space-y-1 flex-1">
+                        <label className="text-[9px] font-bold uppercase tracking-widest text-brand-900/20">Or Paste Image URL</label>
+                        <input 
+                          type="text" 
+                          value={editForm.heroImage}
+                          onChange={e => setEditForm({...editForm, heroImage: e.target.value})}
+                          placeholder="/src/assets/images/your_image.jpg"
+                          className="w-full bg-white border border-brand-900/10 rounded-xl px-4 py-3 text-brand-900 focus:outline-none focus:ring-2 focus:ring-brand-900/5"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[9px] text-brand-900/40 italic mt-1">Tip: You can upload a file or use a path like /src/assets/images/filename.jpg</p>
                   </div>
 
                   {/* Social Links Editor */}
