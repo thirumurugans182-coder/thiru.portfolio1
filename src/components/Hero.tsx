@@ -353,15 +353,7 @@ export default function Hero() {
                   })}
                 </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.8 }}
-                >
-                  <button className="px-6 sm:px-10 py-3 sm:py-4 bg-brand-900 text-brand-50 rounded-lg font-bold text-sm sm:text-lg hover:bg-brand-400 transition-colors shadow-lg shadow-brand-900/20">
-                    Download CV
-                  </button>
-                </motion.div>
+
               </motion.div>
             )}
           </AnimatePresence>
