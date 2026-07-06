@@ -12,9 +12,7 @@ export default function EditableAbout() {
     heading: "I am Thirumurugan S., an Engineering Student.",
     italicPart: "Thirumurugan S.",
     description1: "Hi, I'm Thirumurugan (Thiru), a final-year Electronics and Communication Engineering (ECE) student with a strong interest in technology, software development, and artificial intelligence. I enjoy solving problems through programming and continuously improving my technical skills.",
-    description2: "I have experience in Java, Python, web development, and database technologies, and I am passionate about building practical projects that address real-world challenges. I am a quick learner who enjoys exploring new technologies, taking on challenging projects, and expanding my knowledge in the software domain.",
-    heroImage: "",
-    aboutImage: ""
+    description2: "I have experience in Java, Python, web development, and database technologies, and I am passionate about building practical projects that address real-world challenges. I am a quick learner who enjoys exploring new technologies, taking on challenging projects, and expanding my knowledge in the software domain."
   });
 
   const [editForm, setEditForm] = useState(data);
@@ -27,8 +25,14 @@ export default function EditableAbout() {
       })
       .then(fetchedData => {
         if (fetchedData && fetchedData.heading) {
-          setData(fetchedData);
-          setEditForm(fetchedData);
+          const cleanedData = {
+            heading: fetchedData.heading,
+            italicPart: fetchedData.italicPart || "Thirumurugan S.",
+            description1: fetchedData.description1 || "",
+            description2: fetchedData.description2 || ""
+          };
+          setData(cleanedData);
+          setEditForm(cleanedData);
         }
         setLoading(false);
       })
@@ -43,7 +47,12 @@ export default function EditableAbout() {
       const res = await fetch('/api/about', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm)
+        body: JSON.stringify({
+          heading: editForm.heading,
+          italicPart: editForm.italicPart,
+          description1: editForm.description1,
+          description2: editForm.description2
+        })
       });
       if (res.ok) {
         setData(editForm);

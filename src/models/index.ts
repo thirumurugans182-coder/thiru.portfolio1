@@ -12,8 +12,8 @@ export interface IAbout extends Document {
 }
 
 const AboutSchema = new Schema<IAbout>({
-  heading: { type: String, required: true },
-  description: { type: String, required: true },
+  heading: { type: String, required: false },
+  description: { type: String, required: false },
   heroImage: String,
   heroTitle: String,
   heroRole: String,
