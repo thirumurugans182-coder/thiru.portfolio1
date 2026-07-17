@@ -71,15 +71,7 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
           >
             <span className="font-display text-base sm:text-xl font-bold tracking-tight text-brand-900 uppercase">THIRUMURUGAN S.</span>
           </a>
-          {!user ? (
-            <button 
-              onClick={onLoginClick}
-              className="w-4 h-4 rounded-full bg-brand-900/5 border border-brand-900/20 hover:bg-brand-900 hover:border-brand-900 transition-all cursor-pointer relative group/login"
-              title="Admin Login"
-            >
-              <div className="absolute inset-0 rounded-full bg-brand-900 scale-0 group-hover/login:scale-110 transition-transform duration-300 -z-10 opacity-20" />
-            </button>
-          ) : (
+          {user && (
             <button 
               onClick={handleLogout}
               className="flex items-center gap-2 px-3 py-1 bg-brand-900 text-brand-50 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-brand-800 transition-all"
